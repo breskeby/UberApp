@@ -1,0 +1,46 @@
+apply plugin:'groovy'
+
+
+sourceSets {
+    functionalTest {
+        compileClasspath += sourceSets.main.output + configurations.testRuntime
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy:2.4.4'
+    compile project(':webapp')
+
+    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
+        exclude module: 'groovy-all'
+    }
+
+    functionalTestCompile 'io.ratpack:ratpack-test:1.2.0'
+}
+
+task functionalTest(type: Test) {
+    testClassesDir = sourceSets.functionalTest.output.classesDir
+    classpath = sourceSets.functionalTest.runtimeClasspath
+    reports.junitXml.destination = file("${project.testResultsDir}/$name")
+    reports.html.destination = file("${project.reporting.baseDir}/$name")
+
+    inputs.dir('../samples')
+}
+
+
+idea {
+    module {
+        testSourceDirs += sourceSets.functionalTest.groovy.srcDirs
+        testSourceDirs += sourceSets.functionalTest.resources.srcDirs
+        scopes.TEST.plus.add(configurations.functionalTestCompile)
+        scopes.TEST.plus.add(configurations.functionalTestRuntime)
+    }
+}
+
+check.dependsOn functionalTest
+
